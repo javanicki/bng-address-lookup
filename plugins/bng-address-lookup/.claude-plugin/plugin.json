@@ -1,0 +1,9 @@
+{
+  "name": "bng-address-lookup",
+  "description": "Look up the closest UK addresses to a British National Grid coordinate (or any EPSG coordinate) via the Buchanan Gazetteer API. Supports single lookups and batch CSV processing.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Patryk Janicki",
+    "email": "patryk.janicki@causeway.com"
+  }
+}
