@@ -7,38 +7,61 @@ coordinate lookups and batch CSV processing.
 This repository is a Claude Code [plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
 hosting a single plugin (`bng-address-lookup`).
 
-## Install
+## Quickstart for new users
 
-### 1. Get a Buchanan Gazetteer API token
+### Prerequisites
 
-This plugin does **not** ship with a token. You need one from Buchanan Services
-to use the API. Once you have it, export it in your shell:
+1. **Claude Code installed** and signed in — https://claude.com/claude-code
+2. **Python 3** on your `PATH` (`python3 --version` should work). Standard on macOS;
+   on other systems install via your package manager (`brew install python`,
+   `apt install python3`, etc.).
+3. **A Buchanan Gazetteer API token.** Either:
+   - Ping the maintainer ([@javanicki](https://github.com/javanicki)) for the
+     shared token — fastest, everyone uses one key, or
+   - Request your own from Buchanan Services — slower but each user gets a
+     separate, revocable credential.
+
+   The token is **required** — the plugin ships no fallback.
+
+### 1. Set the API token
+
+Add this line to your `~/.zshrc` (or `~/.bashrc`):
 
 ```bash
-export BNG_API_TOKEN=your-token-here
+export BNG_API_TOKEN=<paste-the-token-here>
 ```
 
-Add the line to `~/.zshrc` (or `~/.bashrc`) so it persists across sessions.
-The plugin will fail fast with a helpful error if the variable is unset.
+Then run `source ~/.zshrc` or open a new terminal so the variable is picked up.
 
-### 2. Add the marketplace and install
+The plugin exits immediately with a helpful error if the variable is unset, so
+do this first.
 
-In Claude Code:
+### 2. Install the plugin
+
+In a Claude Code session, run these slash commands one at a time:
 
 ```text
-/plugin marketplace add <git-url-to-this-repo>
+/plugin marketplace add javanicki/bng-address-lookup
 /plugin install bng-address-lookup@patryk-plugins
+/reload-plugins
 ```
 
-After installation, the skill is available namespaced as
-`/bng-address-lookup:bng-address-lookup`, but Claude will also pick it up
-automatically when you describe a BNG lookup task (e.g. "find addresses near
-this grid ref", or by attaching a CSV of coordinates).
+After install, the skill is available namespaced as
+`/bng-address-lookup:bng-address-lookup`. Claude will also pick it up
+automatically when you describe a BNG lookup task in natural language.
 
-The first time you run a lookup, Claude will check whether `BNG_API_TOKEN` is
-set; if not, it will ask you for the token and run the lookup with it inline.
+### 3. Try it
 
-To pick up changes after the maintainer pushes a new commit:
+Ask Claude in plain English:
+
+> "find addresses near coordx=534903.29, coordy=184167.36"
+
+You should see Claude run the lookup script and report 5 nearby UK addresses,
+saving a CSV under `/tmp/bng_outputs/`.
+
+### Updating later
+
+When the maintainer pushes improvements:
 
 ```text
 /plugin marketplace update patryk-plugins
@@ -47,12 +70,14 @@ To pick up changes after the maintainer pushes a new commit:
 ## Usage
 
 ### Single coordinate
+
 > "Find addresses near coordx=534903.29, coordy=184167.36"
 
 Claude will run the lookup and save a CSV of the nearest addresses to
 `/tmp/bng_outputs/` (or `$CLAUDE_OUTPUT_DIR` if set).
 
 ### Batch from CSV
+
 Provide a CSV with `coordX` and `coordY` columns (case-insensitive). Any other
 columns are passed through to the output unchanged — useful for keeping site
 IDs or names alongside the results. Optional per-row overrides: `epsg`, `limit`.
@@ -66,17 +91,20 @@ IDs or names alongside the results. Optional per-row overrides: `epsg`, `limit`.
 | `BNG_API_TOKEN`     | **Required.** Your Buchanan Gazetteer API token. The script exits with an error if unset. |
 | `CLAUDE_OUTPUT_DIR` | Override the directory results are written to (defaults to `/tmp/bng_outputs/`). |
 
-Set in your shell rc file, e.g.:
-
-```bash
-export BNG_API_TOKEN=your-token-here
-```
-
 ## Requirements
 
 - Python 3 (standard library only — no pip dependencies for the core script).
 - A working Buchanan Gazetteer API token, supplied via the `BNG_API_TOKEN`
   environment variable. No token ships with the plugin.
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+| :-- | :-- |
+| First lookup fails with `BNG_API_TOKEN ... not set` | The env var isn't in the shell Claude Code is running from. Add it to `~/.zshrc` and restart the terminal (or `source` the file). |
+| Buchanan API returns HTTP 401 / 403 | The token in `$BNG_API_TOKEN` is invalid or revoked. Get a fresh one from the maintainer or Buchanan Services. |
+| `python: command not found` | The skill uses `python3`, not `python`. If this still fails, install Python 3 and ensure `python3` is on your `PATH`. |
+| Plugin shows old behaviour after a push | Run `/plugin marketplace update patryk-plugins` then `/reload-plugins`. |
 
 ## Repo layout
 
